@@ -1,0 +1,28 @@
+.progressbar {
+  position: relative;
+  margin: 0.3em 0.5em;
+  background-color: black;
+  border-radius: 1em; /* (height of inner div) / 2 + padding */
+  padding: 0.2em;
+  overflow: hidden;
+}
+.progressbar > .cap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  background-color: initial;
+  width: 100%;
+  color: green;
+  font-weight: bold;
+}
+.progressbar + .progressbar {
+  margin-top: 0.7em;
+}
+.progressbar > div {
+  text-align: center;
+  background-color: orange;
+  height: 1.5em;
+  line-height: 1.5em;
+  border-radius: 0.7em;
+}
