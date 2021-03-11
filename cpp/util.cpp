@@ -105,7 +105,8 @@ std::string file_type(const std::string &path)
 		{
 			LOGD("initialize magic library failed");
 		}
-		if( ::magic_load( handle, 0 ) != 0 )
+		string magic_lib = AP::instance().prefab_path() + "/magic.mgc";
+		if( ::magic_load( handle, magic_lib.c_str() ) != 0 )
 		{
 			LOGD("cannot load magic database -%s", magic_error(handle));
 			magic_close(handle);

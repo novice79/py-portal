@@ -125,6 +125,11 @@ void HttpSvr::spa_app()
                 class FileServer
                 {
                   public:
+                // on pi2   
+                // cat /proc/sys//net/ipv4/tcp_wmem
+                // 4096	16384	4194304
+                // cat /proc/sys//net/ipv4/tcp_rmem
+                // 4096	131072	6291456
                     static void read_and_send(const shared_ptr<HttpServer::Response> &response, const shared_ptr<ifstream> &ifs)
                     {
                         // Read and send 128 KB at a time
@@ -527,6 +532,7 @@ void HttpSvr::handle_upload_home()
 }
 void HttpSvr::start_node()
 {
+    if( bp::search_path("node").empty() ) return;
     if( node_process_ )
     {
         node_process_->terminate();                

@@ -1,8 +1,10 @@
 #!/bin/bash
 # docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+# docker buildx ls
 # docker buildx inspect --bootstrap
 docker run -h arm-ub20 -v $PWD:/workplace \
 --name aub \
+-p 57000:57000 \
 -u="$(id -u):$(id -g)" \
 -w /workplace --rm -it arm32v7-ub20 bash
 

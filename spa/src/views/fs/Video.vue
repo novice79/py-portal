@@ -317,7 +317,7 @@ input[type="radio"]{
 .progressbar {
   position: relative;
   margin: 0.3em 0.5em;
-  min-height: 1.3rem;
+  /* min-height: 1.3rem; */
   background-color: black;
   border-radius: 0.7em; /* (height of inner div) / 2 + padding */
   padding: 0.2em;
@@ -337,8 +337,8 @@ input[type="radio"]{
 .progressbar > div {
   text-align: center;
   background-color: rgb(87, 167, 156);
-  /* height: 1.5em;
-  line-height: 1.5em; */
+  height: 1.5em;
+  line-height: 1.5em;
   border-radius: 0.7em;
 }
 </style>
