@@ -152,6 +152,7 @@ int FFmpeg::get_video_codec(const std::string& video , std::string& codec)
 }
 int FFmpeg::convert_to_x264(std::string video)
 {
+	// convert to h264+mp3 (not libfdk_aac)
 	string full_path = AP::instance().full_store_path(video);
 	Json noty;
 	noty["cmd"] = "ffmpeg_progress";
@@ -164,7 +165,7 @@ int FFmpeg::convert_to_x264(std::string video)
 	"-map 0:v -map 0:a? -map 0:s? "
 	"-c:v libx264 "
 	"-pix_fmt yuv420p "
-	"-c:a libfdk_aac "
+	"-c:a libmp3lame "
 	"-c:s mov_text "
 	"\"%2%\""
 	;

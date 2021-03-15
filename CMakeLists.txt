@@ -6,8 +6,22 @@ endif()
 project(py)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
+# disable nlohmann_json warning, see:
+# https://github.com/nlohmann/json/issues/1861
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-psabi -w")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -w")
+set(uSock_path "${CMAKE_SOURCE_DIR}/3p/uWebSockets")
+file(GLOB USOCKETS_FILES 
+    "${uSock_path}/uSockets/src/*.c" 
+    "${uSock_path}/uSockets/src/eventing/*.c" 
+    "${uSock_path}/uSockets/src/crypto/*.c" 
+    "${uSock_path}/uSockets/src/crypto/sni_tree.cpp"
+    "${uSock_path}/uSockets/src/crypto/openssl.cpp"
+)
+add_library(uSockets STATIC ${USOCKETS_FILES})
+target_compile_definitions(uSockets PRIVATE LIBUS_USE_OPENSSL)
+target_include_directories(uSockets PUBLIC "${uSock_path}/uSockets/src")
+include_directories("${uSock_path}/src")
 
 file(GLOB SOURCE_FILES 
     "cpp/*.c" 
@@ -15,9 +29,11 @@ file(GLOB SOURCE_FILES
     "cpp/*.h" 
     "cpp/*.hpp"
 )
-
+# or uWS::Loop::get()->setSilent(true);
+add_compile_definitions(UWS_HTTPRESPONSE_NO_WRITEMARK)
+# or add_definitions(-DFOO -DBAR ...)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-
+target_link_libraries(${PROJECT_NAME} uSockets)
 add_custom_command(TARGET ${PROJECT_NAME}
 POST_BUILD
 COMMAND ${CMAKE_STRIP} ${PROJECT_NAME} -o "${PROJECT_NAME}_striped"
@@ -61,8 +77,10 @@ target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
 
-target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS} -static -static-libstdc++ -static-libgcc)
-
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7-a")
+    message("build for raspberry pi, link static libc++")
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS} -static -static-libstdc++ -static-libgcc)
+endif()
 # ###########################3
 # add_executable(test test/test.cpp)
 # target_include_directories(test PRIVATE ${HEADER_DIR})

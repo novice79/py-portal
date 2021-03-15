@@ -1,38 +1,38 @@
 #pragma once
 #include "common.h"
-// #include "server_ws.hpp"
-#include "server_http.hpp"
-#include "ws_svr.h"
-using HttpServer = SimpleWeb::Server<SimpleWeb::HTTP>;
-// typedef SimpleWeb::SocketServer<SimpleWeb::WS> WsServer;
+#include "async_file_streamer.h"
 
 class FFmpeg;
 class HttpSvr
 {
+    typedef struct uWS::WebSocket<false, true, PerSocketData> WSType;
+    typedef std::function<void(Json&, WSType*)> Handlers;
+    std::map<std::string, Handlers> handlers_;
     std::shared_ptr<FFmpeg> ffmpeg_;
-    std::shared_ptr<HttpServer> server_;
-    WsSvr ws_svr_;
     std::map<std::string, std::shared_ptr<std::ofstream>> writers_;
     std::shared_ptr<bp::child> node_process_;
+    uWS::Loop *loop_;
+    std::shared_ptr<uWS::App> app_;
     int port_;
 public:
     HttpSvr(int port);
     ~HttpSvr();
-    void init();
-    void ws_to_all(const std::string& json);
+    void run();
+    void init_handlers();
+    void ws_to_all(std::string json);
     int get_port(){return port_;}
-    void res_json(std::shared_ptr<HttpServer::Response> response, Json& data);
+    void res_json(auto *res, Json& data);
+    void res_json_str(auto *res, std::string data);
 private:
     void start_node();
-    void spa_app();
-    void serve_res();
-    void get_files();
-    void handle_upload();
-    void handle_upload_home();
-    void uncompress();
-    void client_info();
-    void ffmpeg();
-    void emplace_ws();
-    void read_and_send(const std::shared_ptr<HttpServer::Response> &response, const std::shared_ptr<std::ifstream> &ifs, size_t len);
-    void routine(const boost::system::error_code& /*e*/, boost::asio::deadline_timer* t);
+    void get_post_data(auto *res, std::function<void (std::string)>);
+    void serve_app(auto *res, auto *req);
+    void serve_res(auto *res, auto *req);
+    void get_files(auto *res, auto *req);
+    void handle_upload(auto *res, auto *req);
+    void handle_upload_home(auto *res, auto *req);
+    void uncompress(auto *res, auto *req);
+
+    void ffmpeg(auto *res, auto *req);
+
 };

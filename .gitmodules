@@ -8,3 +8,7 @@
 	path = 3p/nlohmann_json
 	url = https://github.com/nlohmann/json.git
 	shallow = true
+[submodule "3p/uWebSockets"]
+	path = 3p/uWebSockets
+	url = https://github.com/uNetworking/uWebSockets.git
+	shallow = true

@@ -32,9 +32,11 @@ int main(int argc, char **argv)
   }
   thread t([port]() {
     HttpHome home_svr(port + 1);
+    home_svr.run();
   });
   t.detach();
-  LOG("11111111111111111111111111");
+
   HttpSvr server(port);
+  server.run();
   return 0;
 }

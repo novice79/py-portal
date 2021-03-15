@@ -58,9 +58,6 @@ namespace fs = boost::filesystem;
 #include <nlohmann/json.hpp>
 using Json = nlohmann::json;
 
-#include "server_ws.hpp"
-typedef SimpleWeb::SocketServer<SimpleWeb::WS> WsServer;
-
 #define MEM_FN(x) boost::bind(&self_type::x, shared_from_this())
 #define MEM_FN1(x,y) boost::bind(&self_type::x, shared_from_this(),y)
 #define MEM_FN2(x,y,z) boost::bind(&self_type::x, shared_from_this(),y,z)
@@ -125,6 +122,11 @@ public:
     std::string tmp(){return tmp_path_.string();}
 }; 
 // AP::instance().store_path()
+
+struct PerSocketData {
+    /* Fill with user data */
+};
+
 #define PY_TRACE BOOST_LOG_SEV(PY::instance().lg, boost::log::trivial::trace)
 #define PY_DEBUG BOOST_LOG_SEV(PY::instance().lg, boost::log::trivial::debug)
 #define PY_INFO  BOOST_LOG_SEV(PY::instance().lg, boost::log::trivial::info)

@@ -24,20 +24,22 @@ WORKDIR /app
 # COPY pre_inst/usr/lib/arm-linux-gnueabihf/ /usr/lib/arm-linux-gnueabihf/
 # COPY pre_inst/usr/local/bin/ /usr/local/bin/
 
-RUN apt-get update && apt-get install -y curl unrar p7zip-full transmission-daemon minidlna \
-	&& curl -fsSL https://deb.nodesource.com/setup_14.x | bash - \
-	&& apt-get install -y nodejs ffmpeg
+RUN apt-get update \
+	&& apt-get install -y curl unrar p7zip-full \
+	transmission-daemon minidlna ffmpeg 
 
 # ---for ps & netstat
-RUN apt-get install -y procps net-tools 
+# RUN apt-get install -y procps net-tools 
 
 COPY conf/settings.json /etc/transmission-daemon/settings.json
 COPY conf/minidlna.conf /etc/minidlna.conf
-
+ADD node14.tar.gz /usr/
 COPY py ./py
 COPY www ./www
 COPY prefab ./prefab
 COPY home ./home
+# pi-node-sqlite.tar.gz include [sqlite3 + better-sqlite3] npm modules
+
 # minidlna:1900/udp 8200/tcp; 
 # py app: 57000/tcp 57001/tcp; 
 # transmission: 51413 9091/tcp 42243/udp 53069/udp 45563/udp

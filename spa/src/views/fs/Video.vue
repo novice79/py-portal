@@ -19,7 +19,7 @@
             </div>
             <div class="stream">
               <div class="info">{{s.info}}</div>
-              <button v-if="video_need_convert(f, s)" @click.stop.prevent="to_x264(f, s)" class="ff">转H264+AAC</button>
+              <button v-if="video_need_convert(f, s)" @click.stop.prevent="to_x264(f, s)" class="ff">转H264+MP3</button>
               <button v-else-if="s.type === 'Audio'" @click.stop.prevent="extract_mp3(f, s)" class="ff">提取mp3</button>
               <button v-else-if="s.type === 'Subtitle'" @click.stop.prevent="extract_vtt(f, s)" class="ff">提取vtt</button>
             </div>       
