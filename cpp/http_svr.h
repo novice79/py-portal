@@ -26,6 +26,7 @@ public:
 private:
     void start_node();
     void get_post_data(auto *res, std::function<void (std::string)>);
+    void cli_info(auto *res, auto *req);
     void serve_app(auto *res, auto *req);
     void serve_res(auto *res, auto *req);
     void get_files(auto *res, auto *req);

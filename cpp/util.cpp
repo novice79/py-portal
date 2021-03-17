@@ -228,7 +228,11 @@ std::string get_files_json(const std::string &path)
 	std::vector<fs::path> v;
 
 	for (auto &&x : fs::directory_iterator(p))
+	{
+		if(x.path().string() == AP::instance().tmp())
+			continue;
 		v.push_back(x.path());
+	}
 	// leave client to sort
 	// std::sort(v.begin(), v.end());
 	for (auto &&x : v)

@@ -76,6 +76,10 @@ void HttpSvr::run()
     app_->get("/*", [this](auto *res, auto *req) {
             serve_app(res, req);
         })
+        .get("/cli_info/*", [this](auto *res, auto *req) {
+            cli_info(res, req);
+            res->onAborted([]() {LOG("cli_info aborted")});
+        })
         .get("/store/*", [this](auto *res, auto *req) {
             serve_res(res, req);
             res->onAborted([]() {LOG("serve_res aborted")});
@@ -158,7 +162,20 @@ void HttpSvr::run()
             }
         }).run();
 }
-
+void HttpSvr::cli_info(auto *res, auto *req)
+{
+    res->writeHeader("Content-Type", "text/html");
+    res->write( boost::str(boost::format("<h1>Request from: <i>%1%</i></h1>") % res->getRemoteAddressAsText() ) );
+    res->write( "<h2>Query Fields</h2>" );
+    res->write( req->getQuery() );
+    res->write( "<h2>Header Fields</h2>" );
+    for(auto i = req->begin(); i != req->end(); ++i)
+    {
+        auto h = boost::format("<div>%1%: %2%</div>") % (*i).first % (*i).second ;
+        res->write( boost::str(h) );
+    }
+    res->end();
+}
 void HttpSvr::serve_app(auto *res, auto *req)
 {
     try
@@ -482,6 +499,10 @@ void HttpSvr::handle_upload_home(auto *res, auto *req)
                 if (fs::exists(to_dir + "/node_modules/sqlite3"))
                 {
                     Util::uncompress(AP::instance().prefab_path() + "/sqlite3.7z", to_dir + "/node_modules");
+                }
+                if (fs::exists(to_dir + "/node_modules/better-sqlite3"))
+                {
+                    Util::uncompress(AP::instance().prefab_path() + "/better-sqlite3.7z", to_dir + "/node_modules");
                 }
                 // LOGI("extractZip=%s to %s", path.c_str(), to_dir.c_str() );
                 start_node();

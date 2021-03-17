@@ -30,7 +30,7 @@ file(GLOB SOURCE_FILES
     "cpp/*.hpp"
 )
 # or uWS::Loop::get()->setSilent(true);
-add_compile_definitions(UWS_HTTPRESPONSE_NO_WRITEMARK)
+add_compile_definitions(UWS_HTTPRESPONSE_NO_WRITEMARK FOR_DOCKER)
 # or add_definitions(-DFOO -DBAR ...)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} uSockets)

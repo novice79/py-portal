@@ -18,7 +18,7 @@ void AP::initialize(std::string exe_path)
     store_path_ = ep / "mystore";
     home_path_ = ep / "home";
     log_path_ = ep / "log";
-    tmp_path_ = ep / "tmp";
+    tmp_path_ = store_path_ / "tmp";
     // www and prefab must exist
     if( !fs::exists(store_path_) ) fs::create_directory(store_path_);
     if( !fs::exists(home_path_) ) 
@@ -29,6 +29,7 @@ void AP::initialize(std::string exe_path)
 }
 void PY::init()
 {
+#ifndef FOR_DOCKER
     cout<< "PY::init()" << endl;
     auto log_path = AP::instance().log();
     cout<< "log_path=" << log_path << endl;
@@ -41,6 +42,7 @@ void PY::init()
         keywords::format = "[%TimeStamp%]:<%Severity%> %Message%",
         keywords::max_files = 10
     );
+#endif
     // add console sink
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
     boost::shared_ptr< text_sink > sink = boost::make_shared< text_sink >();

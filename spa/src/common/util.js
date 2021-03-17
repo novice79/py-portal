@@ -194,7 +194,7 @@ class Util {
             ip.every(segment => this.validateNum(segment, 0, 255));
     }
     path2url(path) {
-        return this.store_url() + path;
+        return this.store_url() + '/' + path;
     }
     ss_addrs() {
         return db.ss.find({});
