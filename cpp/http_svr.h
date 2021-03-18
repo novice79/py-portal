@@ -30,6 +30,7 @@ private:
     void serve_app(auto *res, auto *req);
     void serve_res(auto *res, auto *req);
     void get_files(auto *res, auto *req);
+    void file_op(auto *res, auto *req);
     void handle_upload(auto *res, auto *req);
     void handle_upload_home(auto *res, auto *req);
     void uncompress(auto *res, auto *req);

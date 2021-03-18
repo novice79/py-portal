@@ -243,11 +243,6 @@ export default {
     hide_menu(){
       // $(".fs-menu").removeClass("is-open");
     },
-    test(msg){
-      // console.log('in test')
-      alert(cli_id);
-
-    },
     on_create_dir(data) {
       if (data.ret == 0) {
         const n = util.get_name_from_path(data.path);

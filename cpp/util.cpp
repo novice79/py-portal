@@ -223,7 +223,6 @@ std::string get_files_json(const std::string &path)
 	fs::path p{AP::instance().full_store_path(path)};
 	if( !fs::exists(p) ) return "{}";
 	Json j;
-	j["cmd"] = "get_file_list";
 	j["files"] = Json::array();
 	std::vector<fs::path> v;
 
@@ -246,7 +245,7 @@ std::string get_files_json(const std::string &path)
 		std::string time_str = ss.str();
 		fi["name"] = fn;
 		fi["time"] = time_str;
-		fi["path"] = AP::instance().rel_store_path( x.string() );
+		// fi["path"] = AP::instance().rel_store_path( x.string() );
 		if( fs::is_directory(x) )
 		{
 			fi["type"] = "dir";
@@ -263,10 +262,12 @@ std::string get_files_json(const std::string &path)
 	// LOGI("j=%1%", j.dump());
 	return j.dump();
 }
-std::string refresh_files_noty()
+std::string refresh_files_noty(std::string p)
 {
+	// prerequisite: p=full file path
 	Json j;
-	j["cmd"] = "refresh_file_list";
+	j["cmd"] = "refresh_files";
+	j["path"] = AP::instance().rel_store_f_dir(p);
 	return j.dump();
 }
 std::string string_to_hex(const std::string &input)

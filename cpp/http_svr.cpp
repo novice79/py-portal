@@ -17,40 +17,10 @@ HttpSvr::~HttpSvr()
 }
 void HttpSvr::init_handlers()
 {
-    handlers_["del_file"] = [this](Json &json, WSType* ws) {
-        string path = json["path"].get<std::string>();
-        path = AP::instance().full_store_path(path);
-        LOGI("c++ remove %s", path.c_str());
-        fs::remove_all(path);
-        ws_to_all( Util::refresh_files_noty() );
-        json["ret"] = 0;
-        ws->send(json.dump());
-    };
-    handlers_["rename_file"] = [this](Json &json, WSType* ws) {
-        string path = json["path"].get<std::string>();
-        path = AP::instance().full_store_path(path);
-        string new_name = json["new_name"].get<std::string>();
-        new_name = AP::instance().full_store_path(new_name);
-        LOGI("c++ rename %s to %s", path.c_str(), new_name.c_str());
-        fs::rename(path, new_name);
-        ws_to_all( Util::refresh_files_noty() );
-        json["ret"] = 0;
-        ws->send(json.dump());
-    };
-    handlers_["create_dir"] = [this](Json &json, WSType* ws) {
-        string path = json["path"].get<std::string>();
-        path = AP::instance().full_store_path(path);
-        LOGI("c++ create dir %s", path.c_str());
-        fs::create_directories(path);
-        ws_to_all( Util::refresh_files_noty() );
-        json["ret"] = 0;
-        ws->send(json.dump());
-    };
-    handlers_["get_files"] = [](Json &json, WSType* ws) {
-        const string &path = json["path"].get<std::string>();
-        ws->send( Util::get_files_json(path) );
-    };
-
+    // handlers_["get_files"] = [](Json &json, WSType* ws) {
+    //     const string &path = json["path"].get<std::string>();
+    //     ws->send( Util::get_files_json(path) );
+    // };
 }
 void HttpSvr::ws_to_all(std::string json)
 {
@@ -88,6 +58,10 @@ void HttpSvr::run()
             get_files(res, req);
             res->onAborted([]() {LOG("get_files aborted")});
         })
+        .post("/file_op/:type", [this](auto *res, auto *req) {
+            file_op(res, req);
+            res->onAborted([]() {LOG("file_op aborted")});
+        })
         .post("/uncompress", [this](auto *res, auto *req) {
             uncompress(res, req);
             res->onAborted([]() {LOG("uncompress aborted")});
@@ -116,7 +90,6 @@ void HttpSvr::run()
             LOG("%1% opened ws", string{ws->getRemoteAddressAsText()})
             /* Open event here, you may access ws->getUserData() which points to a PerSocketData struct */
             ws->subscribe("broadcast"); 
-            ws->send( Util::get_files_json("/") );
         },
         .message = [this](auto *ws, std::string_view message, uWS::OpCode opCode) {
             // cout<<"ws get msg="<<message << "; opCode=" << opCode<<endl;
@@ -237,6 +210,76 @@ void HttpSvr::get_files(auto *res, auto *req)
         }
     });
 }
+void HttpSvr::file_op(auto *res, auto *req)
+{
+    get_post_data(res, [this, res, req](string payload) {
+        Json rj;
+        rj["ret"] = -1;
+        try
+        {   
+            auto type = req->getParameter(0);
+            auto data = Json::parse(payload);
+            if(type == "delete")
+            {
+                // can delete multiple files
+                std::vector<std::string> files = data["files"];
+                int count = 0;
+                string path;
+                for (auto f : files)
+                {
+                    path =  AP::instance().full_store_path(f);
+                    auto c = fs::remove_all(path);
+                    if(c > 0)
+                    {
+                        LOGI("c++ removed %s", path.c_str());
+                        ++count;
+                    }
+                    else
+                    {
+                        LOGI("c++ remove %s failed", path.c_str());
+                    }
+                }
+                // assume all these files are in the same dir, so only need notify once 
+                if(count > 0)
+                {
+                    rj["ret"] = 0;
+                    rj["count"] = count;
+                    ws_to_all( Util::refresh_files_noty(path) );
+                }
+                // if fail will throw               
+            }
+            else
+            if(type == "rename")
+            {
+                string old_name = data["old_name"].get<std::string>();
+                old_name = AP::instance().full_store_path(old_name);
+                string new_name = data["new_name"].get<std::string>();
+                new_name = AP::instance().full_store_path(new_name);
+                LOGI("c++ rename %s to %s", old_name.c_str(), new_name.c_str());
+                fs::rename(old_name, new_name);
+                ws_to_all( Util::refresh_files_noty(old_name) );
+                rj["ret"] = 0;
+            }
+            else
+            if(type == "create_dir")
+            {
+                string path = data["path"].get<std::string>();
+                path = AP::instance().full_store_path(path);
+                LOGI("c++ create dir %s", path.c_str());
+                fs::create_directories(path);
+                ws_to_all( Util::refresh_files_noty(path) );
+                rj["ret"] = 0;
+            }
+            res_json(res, rj);
+        }
+        catch (const exception &e)
+        {
+            res->writeStatus("400 Bad Request");
+            rj["msg"] = e.what();
+            res_json(res, rj);
+        }
+    });
+}
 void HttpSvr::uncompress(auto *res, auto *req)
 {
     get_post_data(res, [this, res](string payload) {
@@ -257,7 +300,7 @@ void HttpSvr::uncompress(auto *res, auto *req)
                     {
                         rd["ret"] = 0;
                         // response->write(SimpleWeb::StatusCode::success_ok);
-                        ws_to_all(Util::refresh_files_noty());
+                        ws_to_all(Util::refresh_files_noty(full_path.string()));
                     }
                     else
                     {
@@ -313,7 +356,7 @@ void HttpSvr::ffmpeg(auto *res, auto *req)
                         res["ret"] = ffmpeg_->srt_to_vtt(srt);
                         if (0 == res["ret"])
                         {
-                            ws_to_all(Util::refresh_files_noty());
+                            ws_to_all(Util::refresh_files_noty(srt));
                         }
                     }
                     break;
@@ -326,7 +369,7 @@ void HttpSvr::ffmpeg(auto *res, auto *req)
                         res["ret"] = ffmpeg_->sub_stream_to_vtt(video, sid, lang);
                         if (0 == res["ret"])
                         {
-                            ws_to_all(Util::refresh_files_noty());
+                            ws_to_all(Util::refresh_files_noty(video));
                         }
                     }
                     break;
@@ -409,7 +452,7 @@ void HttpSvr::handle_upload(auto *res, auto *req)
                     writer = make_shared<ofstream>(path, std::ofstream::binary);
                 }
                 // relative to mystore path
-                ws_to_all(Util::get_files_json("/"));
+                ws_to_all(Util::get_files_json(""));
                 break;
             }
             writer->write(buff.c_str(), buff.length());
@@ -486,7 +529,7 @@ void HttpSvr::handle_upload_home(auto *res, auto *req)
                 {
                     writer = make_shared<ofstream>(path, std::ofstream::binary);
                 }
-                ws_to_all(Util::get_files_json("/"));
+                ws_to_all(Util::get_files_json(""));
                 break;
             }
             writer->write(buff.c_str(), buff.length());

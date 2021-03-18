@@ -2,7 +2,7 @@
   <div class="All" @click.prevent="close_menu">
     
     <!-- {{ $t('message') }} -->
-    <div class="fi" v-for="f in files" @click="open_file_or_folder(f)">
+    <div class="fi" :key="f.name" v-for="f in files" @click="open_file_or_folder(f)">
       <div v-if="f.type=='dir'">
         <i class="small yellow material-icons">folder</i>
       </div>
@@ -23,17 +23,16 @@
         <div class="file-time">
           <div>{{f.time}}</div>
           <div class="file-size" v-if="f.type != 'dir'">{{formatFileSize(f.size)}}</div>
-          <!-- <div>{{f.path}}</div> -->
         </div>
-        <div v-if="f.type!='dir' && f.shown">
-          <img v-if="f.type.includes('image/')" :src="file_url(f.path)" />
-          <audio v-else-if="f.type.includes('audio/')" :src="file_url(f.path)" controls  @click.stop="1"/>
+        <div v-if="f.type!='dir' && is_shown(f.name)">
+          <img v-if="f.type.includes('image/')" :src="file_url(f.name)" />
+          <audio v-else-if="f.type.includes('audio/')" :src="file_url(f.name)" controls  @click.stop="1"/>
           <video
             v-else-if="f.type.includes('video/')"
-            :src="file_url(f.path)"
+            :src="file_url(f.name)"
             controls="controls" @click.stop="1"
           />
-          <a v-else :href="file_url(f.path)" target="_blank" @click.stop="1">{{$t('open-file')}}</a>
+          <a v-else :href="file_url(f.name)" target="_blank" @click.stop="1">{{$t('open-file')}}</a>
         </div>
       </div>
       <div class="op-menu" @click.stop="toggle_menu">
@@ -46,7 +45,7 @@
           </div> 
           <div class="row">
             <div v-if="f.type!='dir'">
-              <a :href="wifi_url(f)" :download="f.name"> 下载 </a> 
+              <a :href="file_url(f.name)" :download="f.name"> 下载 </a> 
             </div>
             <div v-if="is_zip_file(f)" @click="uncompress(f)">
               解压
@@ -64,7 +63,7 @@
 </template>
 
 <script>
-
+import { mapGetters, mapActions } from 'vuex'
 import util from "@/common/util";
 
 export default {
@@ -72,31 +71,36 @@ export default {
   created: function() {
     this.$root.$on("del_file", this.on_del_file);
     this.$root.$on("rename_file", this.on_rename_file);
-    this.$root.$on("update_file_list", this.update_file_list);
   },
   destroyed() {
     this.$root.$off("del_file", this.on_del_file);
     this.$root.$off("rename_file", this.on_rename_file);
-    this.$root.$off("update_file_list", this.update_file_list);
   },
   mounted() {
-    this.files = g.files;
+
   },
   data() {
     return {
-      files: [],
-      wifi_ip: ""
+      shown: {}
     };
   },
   computed: {
-    store_url() {
-
-    }
+    ...mapGetters({
+      files: 'all',
+      file_url: 'file_url'
+    })
   },
   methods: {
+    ...mapActions([
+      'enter',
+      'back'
+    ]),
+    is_shown(fn){
+      return this.shown[fn]
+    },
     async to_vtt(f) {
       try {
-        const res = await util.post_local("ffmpeg", { code: 1, srt: f.path }, 1);
+        const res = await util.post_local("ffmpeg", { code: 1, srt: f.name }, 1);
         if(res.ret == 0){
           util.show_alert_top_tm(`[${f.name}]转vtt成功`);
         } else{
@@ -115,7 +119,7 @@ export default {
     },
     async uncompress(f) {
       try {
-        const res = await util.post_local("uncompress", { file: f.path }, 1);
+        const res = await util.post_local("uncompress", { file: f.name }, 1);
         if(res.ret == 0){
           util.show_alert_top_tm(`解压文件[${f.name}]成功`);
         } else{
@@ -129,21 +133,10 @@ export default {
     },
     open_file_or_folder(f) {
       if (f.type == 'dir') {
-        this.$root.$emit("enter_dir", f.name);
+        this.enter(f.name);
       } else {
-        f.shown = !f.shown;
-        const i = this.files.indexOf(f)
-        // must splice to make it reactive
-        this.files.splice(i, 1, f)
+        this.shown[f.name] = !this.shown[f.name] 
       }
-    },
-    async update_file_list(files) {     
-      this.files = files;
-    },
-    wifi_url(f){
-      const url = `http://${window.location.host}/store/${f.path}`;
-      // console.log(`download file: ${url}`);
-      return url;
     },
     move_to(f) {
       // alert(i18n.t("hello"));
@@ -179,11 +172,11 @@ export default {
       let i = _.findIndex( g.files, ff=> ff.type == f.type && ff.name == new_name );
       if(i >= 0) return util.show_alert_top_tm(`${this.$t('same-file')}${this.$t('already-exist')}`)
       if (new_name && new_name != f.name) {
-        new_name = util.get_dir_from_path(f.path) + new_name;
+        new_name = util.get_dir_from_path(f.name) + new_name;
         // alert(`new_name = ${new_name}`)
         const cmd = {
           cmd: "rename_file",
-          path: f.path,
+          path: f.name,
           new_name
         };
         ws.send(JSON.stringify(cmd));
@@ -194,7 +187,7 @@ export default {
       if(r){
         const cmd = {
           cmd: "del_file",
-          path: f.path
+          path: f.name
         };
         ws.send(JSON.stringify(cmd));
       }

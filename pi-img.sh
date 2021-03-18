@@ -32,9 +32,10 @@ cd pi-dist
 
 # 5. Install Docker Compose
 # sudo pip3 -v install docker-compose
-
-# --no-cache \
-docker buildx build \
+if [ -n $1 ]; then
+    use_cache=" --no-cache"
+fi
+docker buildx build $use_cache \
 --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
 -t novice/py-portal:latest \
 --platform linux/arm/v7 \

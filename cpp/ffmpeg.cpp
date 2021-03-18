@@ -49,7 +49,7 @@ int FFmpeg::audio_stream_to_mp3(const std::string& video, std::string sid, std::
 		}
 	}
 	c.wait();
-	http_svr_->ws_to_all( Util::refresh_files_noty() );
+	http_svr_->ws_to_all( Util::refresh_files_noty(full_path) );
     return c.exit_code();
 }
 int FFmpeg::srt_to_vtt(const std::string& srt)
@@ -193,7 +193,7 @@ int FFmpeg::convert_to_x264(std::string video)
 		}
 	}
     c.wait();
-	http_svr_->ws_to_all( Util::refresh_files_noty() );
+	http_svr_->ws_to_all( Util::refresh_files_noty(full_path) );
     return c.exit_code();
 }
 // void regex_test()

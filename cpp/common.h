@@ -112,6 +112,10 @@ public:
     {
         return fs::relative(full_path, store_path_).string();
     }    
+    std::string rel_store_f_dir(std::string full_path) 
+    {
+        return fs::relative(full_path, store_path_).remove_filename().string();
+    }  
     std::string full_store_path(std::string rel_path) 
     {
         return (store_path_ / rel_path).string();

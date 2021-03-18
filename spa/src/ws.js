@@ -20,7 +20,10 @@ class WS {
     try{
       const data = JSON.parse(evt.data)
       // console.log(evt.data);
-      vm.$emit(data.cmd, data);
+      if('refresh_files' == data.cmd){
+        store.dispatch('refresh', data.path)
+      }
+      // vm.$emit(data.cmd, data);
     }catch(err){
       console.log(evt.data)
     }

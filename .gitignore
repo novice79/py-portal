@@ -35,6 +35,7 @@ src/3p/file/
 bak*/
 memo.md
 boost_*
-
+node_modules/
 temp/
 test/
+www/

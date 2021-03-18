@@ -2,6 +2,7 @@ import Vue from 'vue'
 
 import App from '@/App.vue'
 import router from '@/router'
+import store from '@/store'
 import i18n from '@/i18n'
 import "@/assets/animate.css"
 window.$ = require('jquery')
@@ -12,7 +13,8 @@ import adb from "@/db";
 Vue.config.productionTip = false
 Vue.prototype.window = window;
 window.i18n = i18n;
-
+window.store = store;
+store.dispatch('back')
 console.log(`navigator.language = ${navigator.language}`);
 if(navigator.language === 'zh-CN'){
   i18n.locale = 'zh'
@@ -23,6 +25,7 @@ adb.then( db=>{
   window.db = db;
   new Vue({
     router,
+    store,
     i18n,
     render: h => h(App)
   }).$mount('#app'); 
