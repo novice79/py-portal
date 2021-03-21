@@ -62,7 +62,10 @@ EXPOSE 57000 57002 51413 9091/tcp 42243/udp 53069/udp 45563/udp 1900/udp 8200/tc
 # so docker run with: -v xxx:/app/mystore -v xxx:/app/mystore
 VOLUME ["/app/mystore", "/app/home"]
 ENTRYPOINT ["/app/py"]
-
+# on the docker host increase max_user_watches by following command
+# echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+# sudo sysctl -p
+# and then run container
 # docker run -d --name pp -p 57000:57000 -p 57001:57001 \
 # -p 1900:1900/udp -p 8200:8200/tcp \
 # -p 51413:51413 -p 9091:9091/tcp -p 42243:42243/udp -p 53069:53069/udp -p 45563:45563/udp \

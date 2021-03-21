@@ -251,14 +251,25 @@ void HttpSvr::file_op(auto *res, auto *req)
             else
             if(type == "rename")
             {
-                string old_name = data["old_name"].get<std::string>();
-                old_name = AP::instance().full_store_path(old_name);
+                std::vector<std::string> files = data["old_names"];
                 string new_name = data["new_name"].get<std::string>();
                 new_name = AP::instance().full_store_path(new_name);
-                LOGI("c++ rename %s to %s", old_name.c_str(), new_name.c_str());
-                fs::rename(old_name, new_name);
-                ws_to_all( Util::refresh_files_noty(old_name) );
-                rj["ret"] = 0;
+                int count = 0;
+                string path;
+                for (auto f : files)
+                {
+                    path =  AP::instance().full_store_path(f);
+                    fs::rename(path, new_name);
+                    LOGI("c++ rename %s to %s", path.c_str(), new_name.c_str());
+                    ++count;
+                }
+                // assume all these files are in the same dir, so only need notify once 
+                if(count > 0)
+                {
+                    rj["ret"] = 0;
+                    rj["count"] = count;
+                    ws_to_all( Util::refresh_files_noty(path) );
+                }
             }
             else
             if(type == "create_dir")
@@ -484,6 +495,7 @@ void HttpSvr::serve_res(auto *res, auto *req)
     }
     catch (const exception &e)
     {
+        LOG("exception:%1%", e.what() )
         res->writeStatus("400 Bad Request");
         res->end(e.what());
     }

@@ -14,6 +14,7 @@ Vue.config.productionTip = false
 Vue.prototype.window = window;
 window.i18n = i18n;
 window.store = store;
+window.router = router;
 store.dispatch('back')
 console.log(`navigator.language = ${navigator.language}`);
 if(navigator.language === 'zh-CN'){

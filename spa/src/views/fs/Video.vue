@@ -6,13 +6,13 @@
         <div class="file-time">
           <div>{{f.time}}</div>
           <div>{{formatFileSize(f.size)}}</div>
-          <div>{{f.duration}}</div>
+          <div>{{durations[f.name]}}</div>
           <div style="cursor:pointer;" @click.stop.prevent="get_info(f, $event)">
             <i class=" material-icons">info</i>
           </div>         
         </div>
         <div class="media-info">
-          <div v-for="(s, i) in f.streams" :key="i">
+          <div v-for="(s, i) in streams[f.path]" :key="i">
             <div v-if="s.progress && s.progress != '100.00%'" class="progressbar">
               <div v-bind:style="{width: s.progress}"></div>
               <div class="cap">{{`${s.progress}[${s.speed}]`}}</div>
@@ -47,66 +47,79 @@
 
 <script>
 import _ from 'lodash'
+import { mapGetters, mapActions } from 'vuex'
 import util from "@/common/util";
 
 export default {
   name: "video",
   created: function() {
-    this.$root.$on("update_file_list", this.update_file_list);
     this.$root.$on("ffmpeg_progress", this.ffmpeg_progress);
   },
   destroyed() {
-    this.$root.$off("update_file_list", this.update_file_list);
     this.$root.$off("ffmpeg_progress", this.ffmpeg_progress);
   },
   mounted() {
-    this.files = this.filter_video(g.files);
     this.draggie = new Draggabilly('.video-player', {
       containment: '.video', 
       handle: '.drag-header'
     });
+    this.load_metadata()
   },
   data() {
     return {
       play_type: 1,
       cur_video: null,
-      files: []
+      durations:{},
+      streams: {}
     };
   },
+  watch: {
+    'files' (new_value, old_value) {
+      this.streams = {}
+      this.durations = {}
+    }
+  },
   computed: {
+    ...mapGetters({
+      all: 'all',
+      files: 'videos',
+    }),
+    ...mapGetters([
+      'file_path',
+      'file_url'
+    ]),
     cur_url() {
-      return this.cur_video ? util.path2url(this.cur_video.path) : null;
+      return this.cur_video ? this.file_url(this.cur_video.name) : null;
     },
     vtt_url() {
       if(this.cur_video){
-        const vp = this.cur_video.path;
+        const vp = this.cur_video.name;
         let vtt_name_to_find;
         if(vp.substr(vp.length - 9) === '_x264.mp4'){
           vtt_name_to_find = vp.substr(0, vp.length - 9);
         } else{
           vtt_name_to_find = vp.substr(0, vp.length - 4);
         }
-        return g.files.filter(f=> 
-          f.path.substr(f.path.length - 4) == ".vtt" 
-          && f.path.includes(vtt_name_to_find)
-        ).map( f=>({lang: this.get_lang_from_path(f.path, vtt_name_to_find), url: util.path2url(f.path)}) );
+        return this.all.filter(f=> 
+          f.name.substr(f.name.length - 4) == ".vtt" 
+          && f.name.includes(vtt_name_to_find)
+        ).map( f=>({lang: this.get_lang_from_path(f.name, vtt_name_to_find), url: this.file_url(f.name)}) );
       }
     }
   },
   methods: {
     ffmpeg_progress(noty){
       // console.log(JSON.stringify(noty));
-      for (const f of this.files) {
-        if(f.path == noty.video){
-          for (const s of f.streams) {
-            if(s.sid == noty.sid){
-              s.progress = noty.progress;
-              s.speed = noty.speed;
-              break;
-            }
+      const vs = this.streams[noty.video];
+      if(vs){
+        for (const s of vs) {
+          if(s.sid == noty.sid){
+            s.progress = noty.progress;
+            s.speed = noty.speed;
+            // console.log(`s.progress=${s.progress}, s.speed=${s.speed}`)
+            vs.splice(vs.indexOf(s), 1, s);
+            break;
           }
-          this.files.splice(this.files.indexOf(f), 1, f)
-          break;
         }
       }
     },
@@ -157,14 +170,14 @@ export default {
     async get_info(f, e){
       // console.log(`in get_info, f.path=${f.path}`)
       const cur_minfo = $(e.currentTarget).closest('.file-desc').find('.media-info');
-      if(f.streams) {
+      if(this.streams[f.path]) {
         cur_minfo.toggle();
         return;
       }
       try {
         const res = await util.post_local("ffmpeg", { code: 0, media: f.path }, 1);
         if(res.ret == 0){          
-          f.streams = res.streams.trim().split(/\n/).map(si=>{
+          this.streams = { ...this.streams, [f.path]: res.streams.trim().split(/\n/).map(si=>{
             console.log(si);
             const m = si.match(/#(0:\d+)(?:\((\w+)\))?:\s(\w+):\s(\w+)/);
             return {
@@ -179,8 +192,7 @@ export default {
 // console.log(m[2])   //chi or und
 // console.log(m[3])   //Subtitle or Video or Audio
 // console.log(m[4])   //mov_text or h264 or aac
-          });
-          this.files.splice(this.files.indexOf(f), 1, f);
+          })};
           cur_minfo.show();
           // util.show_alert_top_tm(`[${f.name}]转vtt成功`);
         } else{
@@ -208,29 +220,21 @@ export default {
     formatFileSize(bytes, decimalPoint) {
       return util.formatFileSize(bytes, decimalPoint)
     },
-    filter_video(files){
-      let vs = files.filter( f=>{
-        if( f.type && f.type.includes('video/') ){
-          let video = document.createElement("video");
-          $(video).on("loadedmetadata", ()=>{
-            f.duration = util.toHHMMSS(video.duration);
-            this.files.splice(this.files.indexOf(f), 1, f);
-          });
-          video.src = util.path2url(f.path);
-          return true;
-        }
-        return false;
-      });
-      return vs;
+    load_metadata(){
+      this.files.forEach(f=>{
+        let video = document.createElement("video");
+        $(video).on("loadedmetadata", ()=>{
+          this.durations = {...this.durations, [f.name]: util.toHHMMSS(video.duration)};
+        });
+        video.src = this.file_url(f.name);
+      })
     },
     play_video(f, e) {
       this.cur_video = f;
       $('.fi').removeClass('selected')
       $(e.currentTarget).addClass('selected')
     },
-    update_file_list(files) {
-      this.files = this.filter_video(files);
-    },
+
   }
 };
 </script>

@@ -22,8 +22,10 @@ class WS {
       // console.log(evt.data);
       if('refresh_files' == data.cmd){
         store.dispatch('refresh', data.path)
+      } else {
+        vm.$emit(data.cmd, data);
       }
-      // vm.$emit(data.cmd, data);
+      
     }catch(err){
       console.log(evt.data)
     }

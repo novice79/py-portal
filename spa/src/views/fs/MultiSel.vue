@@ -1,14 +1,14 @@
 <template>
   <div class="multi-sel">
     <div class="op-btn">
-      <button @click="back">{{$t('back')}}</button>
+      <button @click="restore_before_move">{{$t('back')}}</button>
       <button @click="del_file" :disabled="!is_selected">{{$t('delete')}}</button>
       <button @click="move_to" :disabled="!is_selected">{{$t('move')}}</button>
     </div>
     <div class="op-btn-dummy"></div>
     <!-- {{ $t('message') }} -->
-    <div class="fi" v-for="f in files">
-      <input type="checkbox" v-model="f.sel">
+    <div class="fi" :key="f.path" v-for="f in files">
+      <input type="checkbox" v-model="selected[f.name]">
       <div class="file-desc">
         <div class="fn">{{f.name}}</div>
         <div class="file-time">
@@ -39,65 +39,71 @@
 
 <script>
 import _ from 'lodash'
+import { mapGetters, mapActions } from 'vuex'
 import util from "@/common/util";
 
 export default {
   name: "multi-sel",
   created: function() {
-    this.$root.$on("update_file_list", this.update_file_list);
+
   },
   destroyed() {
-    this.$root.$off("update_file_list", this.update_file_list);
+
   },
   mounted() {
-    this.files = g.files;
+
   },
   data() {
     return {
-      files: []
+      selected: []
     };
   },
+  watch: {
+    'files' (new_value, old_value) {
+      this.selected = {}
+    }
+  },
   computed: {
+    ...mapGetters({
+      files: 'all',
+    }),
     selected_file_names() {
-      let sels = _.filter(this.files, f=>f.sel)
-      sels = _.map(sels, 'name');
+      let sels = _.pickBy(this.selected)
+      sels = _.keys(sels);
       return sels.join(" + ");
     },
     is_selected() {
-      const sels = _.filter(this.files, f=>f.sel)
-      return sels.length > 0;
+      return this.sel_files().length > 0;
     }
   },
   methods: {
-    back(){
-      this.$root.$emit('back', '');
+    ...mapActions([
+      'create_dir',
+      'enter',
+      'back',
+      'delete',
+      'move_to',
+      'confirm_move',
+      'restore_before_move'
+    ]),
+    sel_files(){
+      return _.keys( _.pickBy(this.selected) )
     },
     open_file_or_folder(f) {
       if (f.type == 'dir') {
-        this.$root.$emit("enter_dir", f.name);
+        this.enter(f.name);
       } 
     },
-    update_file_list(files) {
-      this.files = files;
-    },
-    
+
     move_to() {
       // alert(i18n.t("hello"));
-      this.$root.$emit('move_to', '');
+      this.move_to( this.sel_files() );
     },
     
     del_file() {
       const r = confirm(`${this.$t('confirm-del')}${this.selected_file_names}`)
       if(r){
-        for(let f of this.files){
-          if(f.sel){
-            const cmd = {
-              cmd: "del_file",
-              path: f.path
-            };
-            ws.send(JSON.stringify(cmd));
-          }
-        }
+        this.delete( this.sel_files() );
       }
     },
     file_url(file_path) {

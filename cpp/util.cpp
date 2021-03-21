@@ -6,6 +6,18 @@ using namespace std;
 
 namespace Util
 {
+
+uint64_t file_size(string f)
+{
+	struct stat64 s;
+	if(-1 == stat64(f.c_str(), &s))
+	{
+		printf("get file len error\n");
+		return -1;
+	}
+	printf("[%s] get by stat64 length=%llu\n", f.c_str(), s.st_size);
+	return s.st_size;
+}
 uint32_t serial_no()
 {
 	static atomic<uint32_t> s_serial_no(0);
@@ -245,7 +257,7 @@ std::string get_files_json(const std::string &path)
 		std::string time_str = ss.str();
 		fi["name"] = fn;
 		fi["time"] = time_str;
-		// fi["path"] = AP::instance().rel_store_path( x.string() );
+		fi["path"] = AP::instance().rel_store_path( x.string() );
 		if( fs::is_directory(x) )
 		{
 			fi["type"] = "dir";

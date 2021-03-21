@@ -1,14 +1,14 @@
 <template>
   <div class="image">
 
-    <div class="fi" v-for="f in files" >
+    <div class="fi" :key="f.name" v-for="f in files" >
       <div class="file-desc">
         <div>{{f.name}}</div>
         <div class="file-time">
           <div>{{f.time}}</div>
           <div>{{formatFileSize(f.size)}}</div>
         </div>
-        <img @click="toggle_size" :src="file_url(f.path)" />
+        <img @click="toggle_size" :src="file_url(f.name)" />
       </div>
     </div>
     <div class="pad-bottom"></div>
@@ -17,45 +17,44 @@
 
 <script>
 import _ from 'lodash'
+import { mapGetters, mapActions } from 'vuex'
 import util from "@/common/util";
 
 export default {
   name: "image",
   created: function() {
-    this.$root.$on("update_file_list", this.update_file_list);
+
   },
   destroyed() {
-    this.$root.$off("update_file_list", this.update_file_list);
+
   },
   mounted() {
-    this.files = this.filter_img(g.files);
+
   },
   data() {
     return {
-      files: []
+      placeholder: []
     };
   },
   computed: {
-    store_url() {
-      return '';
-    }
+    ...mapGetters({
+      files: 'images',
+    }),
+    ...mapGetters([
+      'file_path',
+      'file_url'
+    ])
   },
   methods: {
-    file_url(file_path) {
-      return util.path2url(file_path);
-    },
+
     formatFileSize(bytes, decimalPoint) {
       return util.formatFileSize(bytes, decimalPoint)
     },
-    filter_img(files){
-      return _.filter(files, f=>f.type && f.type.includes('image/'));
-    },
+
     toggle_size(e) {
         $(e.target).toggleClass('ori-size')
     },
-    update_file_list(files) {
-      this.files = this.filter_img(files);
-    },
+
   }
 };
 </script>

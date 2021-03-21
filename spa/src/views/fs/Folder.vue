@@ -1,11 +1,11 @@
 <template>
   <div class="folder">
     <div class="op-btn">
-      <button @click="back">{{$t('back')}}</button>
+      <button @click="restore_before_move">{{$t('back')}}</button>
       <button @click="confirm_move">{{$t('move')}}</button>
     </div>
     <div class="op-btn-dummy"></div>
-    <div class="fi" v-for="f in files" @click="open_folder(f)">
+    <div class="fi" :key="f.name" v-for="f in files" @click="enter(f.name)">
       <div>
         <i class="small material-icons">folder</i>
       </div>
@@ -22,45 +22,42 @@
 
 <script>
 import _ from 'lodash'
-import util from "@/common/util";
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: "folder",
   created: function() {
-    this.$root.$on("update_file_list", this.update_file_list);
+
   },
   destroyed() {
-    this.$root.$off("update_file_list", this.update_file_list);
+
   },
   mounted() {
-    this.files = this.filter_folder(g.files);
+
   },
   data() {
     return {
-      files: []
+      placeholder: []
     };
   },
   computed: {
-    store_url() {
-      return '';
-    }
+    ...mapGetters({
+      files: 'dirs',
+    }),
+    ...mapGetters([
+      'file_path',
+      'file_url'
+    ])
   },
   methods: {
-    back(){
-      this.$root.$emit('back', '');
-    },
-    confirm_move(){
-      this.$root.$emit('confirm_move', '');
-    },
-    filter_folder(files){
-      return _.filter(files, f=>f.type == 'dir');
-    },
-    open_folder(f) {
-        this.$root.$emit("enter_dir", f.name);
-    },
-    update_file_list(files) {
-      this.files = this.filter_folder(files);
-    },
+    ...mapActions([
+      'create_dir',
+      'enter',
+      'back',
+      'move_to',
+      'confirm_move',
+      'restore_before_move'
+    ]),
   }
 };
 </script>

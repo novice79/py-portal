@@ -9,7 +9,7 @@ function populate_default() {
     if (!db.ui.findOne({})) {
         db.ui.insert({
             sort_type: 1,
-            sort_asc: 'asc',
+            sort_asc: false,
             audio_loop_type: '1'
         });
     }

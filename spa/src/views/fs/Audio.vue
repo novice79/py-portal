@@ -1,12 +1,12 @@
 <template>
   <div class="audio">
-    <div class="fi" v-for="f in files" @click="play_audio(f, $event)" v-bind:id="hash(f.name)">
+    <div class="fi" v-for="f in files" :key="f.name" @click="play_audio(f, $event)" v-bind:id="hash(f.name)">
       <div class="file-desc">
         <div>{{f.name}}</div>
         <div class="file-time">
           <div>{{f.time}}</div>
           <div>{{formatFileSize(f.size)}}</div>
-          <div>{{f.duration}}</div>
+          <div>{{durations[f.name]}}</div>
         </div>
       </div>
     </div>
@@ -49,18 +49,19 @@
 
 <script>
 import _ from 'lodash'
+import { mapGetters, mapActions } from 'vuex'
 import util from "@/common/util";
 
 export default {
   name: "audio",
   created: function() {
-    this.$root.$on("update_file_list", this.update_file_list);
+
   },
   destroyed() {
-    this.$root.$off("update_file_list", this.update_file_list);
+
   },
   mounted() {
-    this.files = this.filter_audio(g.files);
+    this.load_metadata();
     this.draggie = new Draggabilly('.audio-player', {
       containment: '.audio', 
       handle: '.drag-header'
@@ -72,13 +73,25 @@ export default {
     return {
       play_type: 1,
       cur_audio: null,
-      files: []
+      durations:{}
     };
+  },
+  watch: {
+    'files' (new_value, old_value) {
+      this.durations = {}
+    }
   },
   computed: {
     cur_url() {
-      return this.cur_audio ? util.path2url(this.cur_audio.path) : null;
-    }
+      return this.cur_audio ? this.file_url(this.cur_audio.name) : null;
+    },
+    ...mapGetters({
+      files: 'audios',
+    }),
+    ...mapGetters([
+      'file_path',
+      'file_url'
+    ])
   },
   methods: {
     set_loop_type(type){
@@ -129,29 +142,21 @@ export default {
     formatFileSize(bytes, decimalPoint) {
       return util.formatFileSize(bytes, decimalPoint)
     },
-    filter_audio(files){
-      let audios = _.filter(files, f=>{
-        if( f.type && f.type.includes('audio/') ){
-          let audio = new Audio();
-          $(audio).on("loadedmetadata", ()=>{
-            f.duration = util.toHHMMSS(audio.duration);
-            this.files.splice(this.files.indexOf(f), 1, f);
-          });
-          audio.src = util.path2url(f.path);
-          return true;
-        }
-        return false;
-      });
-      return audios;
+    load_metadata(){
+      this.files.forEach(f=>{
+        let audio = new Audio();
+        $(audio).on("loadedmetadata", ()=>{
+          this.durations = {...this.durations, [f.name]: util.toHHMMSS(audio.duration) }
+        });
+        audio.src = this.file_url(f.name);
+      })
     },
     play_audio(f, e) {
       this.cur_audio = f;
       $('.fi').removeClass('selected')
       $(e.currentTarget).addClass('selected')
     },
-    update_file_list(files) {
-      this.files = this.filter_audio(files);
-    },
+
   }
 };
 </script>

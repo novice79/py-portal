@@ -2,6 +2,7 @@
 #include "common.h"
 namespace Util
 {
+    uint64_t file_size(std::string f);
     std::string ep_to_string(boost::asio::ip::udp::endpoint ep);
     std::vector<uint8_t> uuid();
     std::vector<std::string> split(const std::string &s, std::string delim = ",");

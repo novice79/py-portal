@@ -4,7 +4,7 @@
 #include "util.h"
 class AsyncFileStreamer: public std::enable_shared_from_this<AsyncFileStreamer>  {
     std::string file_path_;
-    size_t file_len_, range_begin_, req_len_;
+    uint64_t file_len_, range_begin_, req_len_;
     uWS::Loop *loop_;
     std::vector<char> buff_;
     std::shared_ptr<std::ifstream> ifs_;
@@ -20,7 +20,9 @@ public:
         ifs_ = std::make_shared<std::ifstream>();
         ifs_->open(file_path_, std::ifstream::in | std::ios::binary | std::ios::ate);
         file_len_ = ifs_->tellg();
-        // printf("[%s] len=%u\n", file_path.c_str(), file_len_);
+        // printf("[%s] len=%llu\n", file_path.c_str(), file_len_);
+        // file_len_ = Util::file_size(file_path);
+        // printf("[%s] len=%llu\n", file_path.c_str(), file_len_);
         // printf("print headers begin--------------------\n");
         // for(auto i = req->begin(); i != req->end(); i++)
         // {
@@ -34,8 +36,8 @@ public:
             // std::cout << "received req range=" << range << std::endl;
             boost::replace_all(range, "bytes=", "");
             auto vs = Util::split(range, "-");
-            size_t begin = std::stoul(vs[0]);
-            size_t end = vs[1] == "" ? file_len_ : std::stoul(vs[1]);
+            uint64_t begin = std::stoull(vs[0]);
+            uint64_t end = vs[1] == "" ? file_len_ : std::stoull(vs[1]);
             // [begin, end] not [begin, end)
             end = std::min(file_len_ - 1, end);
             req_len_ = (end - begin) + 1;
@@ -57,7 +59,7 @@ public:
         // for firefox need to know you can handle range seeking
         res->writeHeader("Accept-Ranges", "bytes");
         // res->writeHeader("Connection", "keep-alive");
-        // printf("file_len_=%u, req_len_=%u, range_begin_=%u\n", file_len_, req_len_, range_begin_);
+        // printf("file_len_=%llu, req_len_=%llu, range_begin_=%llu\n", file_len_, req_len_, range_begin_);
         // res->tryEnd() already set "Content-Length"
         // res->writeHeader("Content-Length", std::to_string(req_len_));
         auto ft = Util::mime_type(file_path_);
@@ -79,7 +81,9 @@ public:
         }
         ifs_->seekg(range_begin_ + res->getWriteOffset(), std::ios::beg);
         std::streamsize rc = ifs_->read( &buff_[0], 
-            std::min(buff_.size(), file_len_ - range_begin_ - res->getWriteOffset()) ).gcount();
+            std::min(buff_.size(), 
+            static_cast<size_t>(file_len_ - range_begin_ )
+            - res->getWriteOffset()) ).gcount();
         auto chunk = std::string_view(&buff_[0], rc);
         if (chunk.length() == 0)
         {
@@ -87,7 +91,7 @@ public:
             return;
         }
             
-        // printf("serve[%s] %u, req_len_=%u\n", file_path_.c_str(), chunk.size(), req_len_);
+        // LOG("serve[%1%] %2%, req_len_=%3%", file_path_, chunk.size(), req_len_);
         if (res->tryEnd(chunk, req_len_).first)
         {
             streamFile();

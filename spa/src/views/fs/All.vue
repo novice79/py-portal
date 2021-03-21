@@ -69,12 +69,10 @@ import util from "@/common/util";
 export default {
   name: "All",
   created: function() {
-    this.$root.$on("del_file", this.on_del_file);
-    this.$root.$on("rename_file", this.on_rename_file);
+
   },
   destroyed() {
-    this.$root.$off("del_file", this.on_del_file);
-    this.$root.$off("rename_file", this.on_rename_file);
+
   },
   mounted() {
 
@@ -87,13 +85,21 @@ export default {
   computed: {
     ...mapGetters({
       files: 'all',
-      file_url: 'file_url'
-    })
+    }),
+    ...mapGetters([
+      'file_path',
+      'file_url'
+    ])
   },
   methods: {
     ...mapActions([
       'enter',
-      'back'
+      'back',
+      'delete',
+      'rename',
+      'create_dir',
+      'move_to',
+      'confirm_move'
     ]),
     is_shown(fn){
       return this.shown[fn]
@@ -135,12 +141,8 @@ export default {
       if (f.type == 'dir') {
         this.enter(f.name);
       } else {
-        this.shown[f.name] = !this.shown[f.name] 
+        this.shown = { ...this.shown, [f.name]: !this.shown[f.name] }
       }
-    },
-    move_to(f) {
-      // alert(i18n.t("hello"));
-      this.$root.$emit('move_to', f);
     },
     close_menu() {
       $(".op-menu").removeClass("is-open");
@@ -150,50 +152,21 @@ export default {
       this.close_menu();
       !isOpen && e.currentTarget.classList.toggle("is-open");
     },
-    on_del_file(data) {
-      if (data.ret == 0) {
-        const n = util.get_name_from_path(data.path);
-        util.show_info_center_tm(`${this.$t('delete')}【${n}】${this.$t('success')}`);
-      } else {
-        util.show_error_top(`${this.$t('delete')}${this.$t('fail')}: ${data.msg}`);
-      }
-    },
-    on_rename_file(data) {
-      if (data.ret == 0) {
-        const n = util.get_name_from_path(data.path);
-        util.show_info_center_tm(`${this.$t('move')}/${this.$t('rename-file')}【${n}】${this.$t('success')}`);
-      } else {
-        util.show_error_top(`${this.$t('move')}/${this.$t('rename-file')}【${n}】${this.$t('fail')}：${data.msg}`);
-      }
-    },
+
     rename_file(f) {
       let new_name = prompt(this.$t('new-file-name'), f.name);
       if(new_name) new_name = new_name.replace(/[\n\r]/gm, "");
-      let i = _.findIndex( g.files, ff=> ff.type == f.type && ff.name == new_name );
+      let i = _.findIndex( this.files, ff=> ff.type == f.type && ff.name == new_name );
       if(i >= 0) return util.show_alert_top_tm(`${this.$t('same-file')}${this.$t('already-exist')}`)
       if (new_name && new_name != f.name) {
-        new_name = util.get_dir_from_path(f.name) + new_name;
-        // alert(`new_name = ${new_name}`)
-        const cmd = {
-          cmd: "rename_file",
-          path: f.name,
-          new_name
-        };
-        ws.send(JSON.stringify(cmd));
+        this.rename(this.file_path(f.name), this.file_path(new_name)) 
       }
     },
     del_file(f) {
       const r = confirm( `${this.$t('confirm-del')}[${f.name}]？`)
       if(r){
-        const cmd = {
-          cmd: "del_file",
-          path: f.name
-        };
-        ws.send(JSON.stringify(cmd));
+        this.delete(f.name)
       }
-    },
-    file_url(file_path) {
-      return `${util.store_url()}/${file_path}`;
     },
     formatFileSize(bytes, decimalPoint) {
       return util.formatFileSize(bytes, decimalPoint)
