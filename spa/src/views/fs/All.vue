@@ -41,7 +41,7 @@
           <div class="row">
             <div @click="del_file(f)">{{$t('delete')}}</div>
             <div @click="rename_file(f)">{{$t('rename-file')}}</div>
-            <div @click="move_to(f)">{{$t('move')}}</div>
+            <div @click="move_to(f.name)">{{$t('move')}}</div>
           </div> 
           <div class="row">
             <div v-if="f.type!='dir'">
@@ -159,7 +159,7 @@ export default {
       let i = _.findIndex( this.files, ff=> ff.type == f.type && ff.name == new_name );
       if(i >= 0) return util.show_alert_top_tm(`${this.$t('same-file')}${this.$t('already-exist')}`)
       if (new_name && new_name != f.name) {
-        this.rename(this.file_path(f.name), this.file_path(new_name)) 
+        this.rename({old_names:this.file_path(f.name), new_name: this.file_path(new_name)}) 
       }
     },
     del_file(f) {

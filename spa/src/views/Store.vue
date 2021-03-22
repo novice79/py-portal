@@ -28,20 +28,20 @@
       <div class="sort-dropdown">
         <div @click="set_sort_criteria(1)">
           {{$t('sort-by-time')}}
-          <i v-if="sort_type==1 && order_type=='asc'" class="material-icons">arrow_upward</i>
-          <i v-else-if="sort_type==1 && order_type=='desc'" class="material-icons">arrow_downward</i>
+          <i v-if="sort_type==1 && order_type==0" class="material-icons">arrow_upward</i>
+          <i v-else-if="sort_type==1 && order_type==1" class="material-icons">arrow_downward</i>
           <i v-else class="material-icons">swap_vert</i>
         </div>
         <div @click="set_sort_criteria(2)">
           {{$t('sort-by-name')}}
-          <i v-if="sort_type==2 && order_type=='asc'" class="material-icons">arrow_upward</i>
-          <i v-else-if="sort_type==2 && order_type=='desc'" class="material-icons">arrow_downward</i>
+          <i v-if="sort_type==2 && order_type==0" class="material-icons">arrow_upward</i>
+          <i v-else-if="sort_type==2 && order_type==1" class="material-icons">arrow_downward</i>
           <i v-else class="material-icons">swap_vert</i>
         </div>
         <div @click="set_sort_criteria(3)">
           {{$t('sort-by-type')}}
-          <i v-if="sort_type==3 && order_type=='asc'" class="material-icons">arrow_upward</i>
-          <i v-else-if="sort_type==2 && order_type=='desc'" class="material-icons">arrow_downward</i>
+          <i v-if="sort_type==3 && order_type==0" class="material-icons">arrow_upward</i>
+          <i v-else-if="sort_type==3 && order_type==1" class="material-icons">arrow_downward</i>
           <i v-else class="material-icons">swap_vert</i>
         </div>
         <div class="multi-sel" @click="switch_page($t('multi-sel'), 'multi-sel')">

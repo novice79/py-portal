@@ -140,11 +140,12 @@ export default new Vuex.Store({
             }
             commit('set_requesting', false)
         },
-        async rename({ state, getters, commit, dispatch }, old_names, new_name) {
+        async rename({ state, getters, commit, dispatch }, {old_names, new_name}) {
             // suppose parameters already with relative path
             if( !Array.isArray(old_names) ) old_names = [old_names];
             commit('set_requesting', true)
             try {
+                console.log(`old_names=${JSON.stringify(old_names)}, new_name=${new_name}`)
                 const res = await util.post_local("file_op/rename", {
                     old_names,
                     new_name
@@ -156,7 +157,7 @@ export default new Vuex.Store({
                 }
 
             } catch (err) {
-                console.log(`move ${old_name} failed: ${JSON.stringify(err)}`);
+                console.log(`move ${old_names} failed: ${JSON.stringify(err)}`);
             }
             commit('set_requesting', false)
         },
@@ -182,9 +183,11 @@ export default new Vuex.Store({
             // sel_f should be a array of selected files to be moved
             if( !Array.isArray(sel_f) ) sel_f = [sel_f];
             original_dir = _.cloneDeep(dirs);
-            const cr = router.currentRoute;
-            // console.log(`cr.name=${cr.name}`)
-            original_page = cr.name;
+            // const cr = router.currentRoute;
+            // // console.log(`cr.name=${cr.name}`)
+            // original_page = cr.name;
+            // always return to all page
+            original_page = 'all'
             router.replace('folder', () => {
                 pending_f = sel_f.map(fn=>`${path}/${fn}`)
             });
@@ -194,7 +197,7 @@ export default new Vuex.Store({
             let i = _.findIndex(state.files, f => f.type == pending_f[0].type && f.name == pending_f[0].name);
             if (i >= 0) return util.show_alert_top_tm(i18n.t('already-exist'))
             // actually move and restore previous dir
-            await dispatch('rename', pending_f, getters.path)
+            await dispatch('rename', {old_names: pending_f, new_name: getters.path})
             dispatch('restore_before_move')
         },
         restore_before_move({ state, getters, commit, dispatch }) {

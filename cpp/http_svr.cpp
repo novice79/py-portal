@@ -255,12 +255,20 @@ void HttpSvr::file_op(auto *res, auto *req)
                 string new_name = data["new_name"].get<std::string>();
                 new_name = AP::instance().full_store_path(new_name);
                 int count = 0;
-                string path;
+                string from, to;
                 for (auto f : files)
                 {
-                    path =  AP::instance().full_store_path(f);
-                    fs::rename(path, new_name);
-                    LOGI("c++ rename %s to %s", path.c_str(), new_name.c_str());
+                    from =  AP::instance().full_store_path(f);
+                    if( fs::is_directory(new_name) )
+                    {
+                        to = (fs::path(new_name) / fs::path(from).filename()).string();
+                    }
+                    else
+                    {
+                        to = new_name;
+                    }
+                    LOGI("c++ rename %s to %s", from.c_str(), to.c_str());
+                    fs::rename(from, to);             
                     ++count;
                 }
                 // assume all these files are in the same dir, so only need notify once 
@@ -268,7 +276,7 @@ void HttpSvr::file_op(auto *res, auto *req)
                 {
                     rj["ret"] = 0;
                     rj["count"] = count;
-                    ws_to_all( Util::refresh_files_noty(path) );
+                    ws_to_all( Util::refresh_files_noty(from) );
                 }
             }
             else
@@ -332,6 +340,7 @@ void HttpSvr::uncompress(auto *res, auto *req)
         }
         catch (const exception &e)
         {
+            res->writeHeader("Content-Type", "text/plain");
             res->writeStatus("400 Bad Request");
             res->end(e.what());
         }
@@ -429,6 +438,7 @@ void HttpSvr::ffmpeg(auto *res, auto *req)
 void HttpSvr::handle_upload(auto *res, auto *req)
 {
     get_post_data(res, [this, res](string payload) {
+        res->writeHeader("Content-Type", "text/plain");
         try
         {
             const string &data = payload;
@@ -463,7 +473,7 @@ void HttpSvr::handle_upload(auto *res, auto *req)
                     writer = make_shared<ofstream>(path, std::ofstream::binary);
                 }
                 // relative to mystore path
-                ws_to_all(Util::get_files_json(""));
+                ws_to_all(Util::refresh_files_noty(""));
                 break;
             }
             writer->write(buff.c_str(), buff.length());
@@ -503,6 +513,7 @@ void HttpSvr::serve_res(auto *res, auto *req)
 void HttpSvr::handle_upload_home(auto *res, auto *req)
 {
     get_post_data(res, [this, res](string payload) {
+        res->writeHeader("Content-Type", "text/plain");
         try
         {
             const string &data = payload;
@@ -541,7 +552,7 @@ void HttpSvr::handle_upload_home(auto *res, auto *req)
                 {
                     writer = make_shared<ofstream>(path, std::ofstream::binary);
                 }
-                ws_to_all(Util::get_files_json(""));
+                ws_to_all(Util::refresh_files_noty(""));
                 break;
             }
             writer->write(buff.c_str(), buff.length());

@@ -3,7 +3,7 @@
     <div class="op-btn">
       <button @click="restore_before_move">{{$t('back')}}</button>
       <button @click="del_file" :disabled="!is_selected">{{$t('delete')}}</button>
-      <button @click="move_to" :disabled="!is_selected">{{$t('move')}}</button>
+      <button @click="move_to( sel_files() )" :disabled="!is_selected">{{$t('move')}}</button>
     </div>
     <div class="op-btn-dummy"></div>
     <!-- {{ $t('message') }} -->
@@ -94,14 +94,9 @@ export default {
         this.enter(f.name);
       } 
     },
-
-    move_to() {
-      // alert(i18n.t("hello"));
-      this.move_to( this.sel_files() );
-    },
     
     del_file() {
-      const r = confirm(`${this.$t('confirm-del')}${this.selected_file_names}`)
+      const r = confirm(`${this.$t('confirm-del')}[${this.selected_file_names}]`)
       if(r){
         this.delete( this.sel_files() );
       }
