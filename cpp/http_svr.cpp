@@ -128,7 +128,7 @@ void HttpSvr::run()
             /* You may access ws->getUserData() here */
             LOG("%1% closed ws", string{ws->getRemoteAddressAsText()})
         }
-        }).listen(port_, [this](auto *token) {
+        }).listen("0.0.0.0", port_, [this](auto *token) {
             if (token)
             {
                 LOG("file server listen at %1%", port_)

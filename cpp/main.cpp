@@ -3,6 +3,7 @@
 #include "util.h"
 #include "http_svr.h"
 #include "http_home.h"
+#include "socks5.h"
 using namespace std;
 
 int main(int argc, char **argv)
@@ -35,6 +36,12 @@ int main(int argc, char **argv)
     home_svr.run();
   });
   t.detach();
+
+  thread t1([port]() {
+    Socks5 socks(port + 1000);
+    socks.run();
+  });
+  t1.detach();
 
   HttpSvr server(port);
   server.run();

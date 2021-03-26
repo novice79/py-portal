@@ -140,8 +140,16 @@ class Util {
     timeout(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-    async post_local(path, data, retry = 3) {
+    async post_local(path, data, retry = 1) {
         if (retry <= 0) return;
+        swal({
+            title: 'Requesting...',
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+            onOpen: () => {
+                swal.showLoading();
+            }
+        })
         const host = location.host || `127.0.0.1:${this.http_port()}`;
         const url = `http://${host}/${path}`;
         // console.log(`post_local url=${url}`)
@@ -160,6 +168,7 @@ class Util {
             await this.timeout(500);
             return await this.post_local(path, data, retry - 1)
         }
+        swal.close()
     }
     toHHMMSS(s) {
         let sec_num = parseInt(s, 10); // don't forget the second param
