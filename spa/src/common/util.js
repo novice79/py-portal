@@ -142,12 +142,12 @@ class Util {
     }
     async post_local(path, data, retry = 1) {
         if (retry <= 0) return;
-        swal({
+        Swal.fire({
             title: 'Requesting...',
             allowEscapeKey: false,
             allowOutsideClick: false,
-            onOpen: () => {
-                swal.showLoading();
+            didOpen: () => {
+                Swal.showLoading();
             }
         })
         const host = location.host || `127.0.0.1:${this.http_port()}`;
@@ -162,13 +162,14 @@ class Util {
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+            Swal.close()
             return res;
         } catch (error) {
             console.log(`post_local url=${url} failed, error=${JSON.stringify(error)} retry=${retry}`);
+            Swal.close()
             await this.timeout(500);
             return await this.post_local(path, data, retry - 1)
-        }
-        swal.close()
+        }       
     }
     toHHMMSS(s) {
         let sec_num = parseInt(s, 10); // don't forget the second param
