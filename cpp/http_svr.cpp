@@ -212,13 +212,14 @@ void HttpSvr::get_files(auto *res, auto *req)
 }
 void HttpSvr::file_op(auto *res, auto *req)
 {
-    get_post_data(res, [this, res, req](string payload) {
+    string type{ req->getParameter(0) };
+    get_post_data(res, [this, res, type=move(type)](string payload) {
         Json rj;
         rj["ret"] = -1;
         try
         {   
-            auto type = req->getParameter(0);
             auto data = Json::parse(payload);
+            LOGI("file_op type=%1%, payload=%2%", type, payload);
             if(type == "delete")
             {
                 // can delete multiple files
@@ -294,6 +295,7 @@ void HttpSvr::file_op(auto *res, auto *req)
         catch (const exception &e)
         {
             res->writeStatus("400 Bad Request");
+            LOGI("file_op exception=%1%", e.what());
             rj["msg"] = e.what();
             res_json(res, rj);
         }
