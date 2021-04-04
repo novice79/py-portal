@@ -37,6 +37,6 @@ if [ -n $1 ]; then
 fi
 docker buildx build $use_cache \
 --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
--t novice/py-portal:latest \
+-t novice/py-portal:pi \
 --platform linux/arm/v7 \
 --push .

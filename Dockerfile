@@ -8,6 +8,9 @@ COPY cpp ./cpp
 COPY spa ./spa
 COPY CMakeLists.txt .
 COPY build.sh .
+RUN mkdir -p lib \
+    && cp -P /lib/x86_64-linux-gnu/libmagic.so* lib/ \
+    && cp -P /lib/x86_64-linux-gnu/libsqlite3.so* lib/
 # build spa ui
 RUN cd spa && npm i && npm run build
 # build c++ backend
@@ -30,7 +33,7 @@ RUN apt-get update \
 	unrar p7zip-full \
 	transmission-daemon minidlna ffmpeg
 COPY --from=my-build /workplace/dist /app
-COPY --from=my-build /lib/x86_64-linux-gnu/libmagic.so* /lib/x86_64-linux-gnu/
+COPY --from=my-build /workplace/lib /lib/x86_64-linux-gnu/
 COPY pi-dist/conf/settings.json /etc/transmission-daemon/settings.json
 COPY pi-dist/conf/minidlna.conf /etc/minidlna.conf
 

@@ -6,7 +6,7 @@ endif()
 project(py)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+# set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 # disable nlohmann_json warning, see:
 # https://github.com/nlohmann/json/issues/1861
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-psabi -w")
@@ -74,8 +74,14 @@ else()
     target_link_libraries (${PROJECT_NAME} ${SQLite3_LIBRARIES})
 endif()
 find_library(libmagic magic)
+# find_library(liblzma lzma)
+# find_library(libbz2 bz2)
 target_link_libraries(${PROJECT_NAME} ${libtorrent} ${libtry_signal})
-target_link_libraries(${PROJECT_NAME} ${libmagic} )
+target_link_libraries(${PROJECT_NAME} 
+    ${libmagic} 
+    # ${liblzma} 
+    # ${libbz2}
+)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} )
 target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} OpenSSL::SSL OpenSSL::Crypto)

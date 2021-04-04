@@ -9,5 +9,5 @@ cmake -H. -B$dir \
 
 cmake --build $dir
 mkdir -p dist
-[[ -f "$dir/py" ]] && mv $dir/py dist/
+[[ -f "$dir/py_striped" ]] && mv $dir/py_striped dist/py
 # [ ! -d dist/prefab ] && cp -r prefab dist/
