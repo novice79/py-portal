@@ -1,0 +1,9 @@
+*build*/
+.vscode/
+bak*/
+**/node_modules
+pi-dist/
+!pi-dist/conf
+!pi-dist/sources.list
+!build.sh
+!hooks/build

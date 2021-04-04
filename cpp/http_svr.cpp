@@ -562,10 +562,6 @@ void HttpSvr::handle_upload_home(auto *res, auto *req)
                 writer->close();
                 string to_dir = AP::instance().home_path();
                 Util::uncompress(path, to_dir);
-                if (fs::exists(to_dir + "/node_modules/sqlite3"))
-                {
-                    Util::uncompress(AP::instance().prefab_path() + "/sqlite3.7z", to_dir + "/node_modules");
-                }
                 if (fs::exists(to_dir + "/node_modules/better-sqlite3"))
                 {
                     Util::uncompress(AP::instance().prefab_path() + "/better-sqlite3.7z", to_dir + "/node_modules");

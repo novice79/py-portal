@@ -11,9 +11,7 @@ Testing
 compile_commands.json
 .usages_clang
 .ssh/
-
-dist/
-!dist/backend
+core
 *.crt
 *.key
 *.db
@@ -33,6 +31,7 @@ docs/doxygen_output
 .DS_Store
 src/3p/file/
 bak*/
+!hooks/build
 memo.md
 boost_*
 node_modules/
