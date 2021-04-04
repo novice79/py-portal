@@ -39,3 +39,6 @@ temp/
 test/
 www/
 dist/py
+pi-dist/*
+!pi-dist/conf/
+!pi-dist/prefab/
