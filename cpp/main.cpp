@@ -11,6 +11,9 @@ int main(int argc, char **argv)
   auto path = fs::canonical(fs::path(argv[0]).remove_filename());
   AP::instance().initialize( fs::system_complete(path).string() );
   int port = std::getenv("PORT") ? stoi( getenv("PORT") ) : 57000;
+  fs::permissions(AP::instance().store_path(),
+                    fs::perms::set_gid_on_exe | fs::perms::add_perms);
+  
   fs::path exe = bp::search_path("minidlnad");
   if( !exe.empty() ) 
   {

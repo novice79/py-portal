@@ -37,6 +37,8 @@ COPY --from=my-build /workplace/lib /lib/x86_64-linux-gnu/
 COPY pi-dist/conf/settings.json /etc/transmission-daemon/settings.json
 COPY pi-dist/conf/minidlna.conf /etc/minidlna.conf
 
+RUN sed -i '/^# umask /s/^#.*/umask 002/; /^# alias l.\+/s/^# //g; /^# export .\+/s/^# //' /root/.bashrc \
+	&& sed -i 's/type="text"/type="text" readonly/g' /usr/share/transmission/web/index.html
 # minidlna:1900/udp 8200/tcp; 
 # py app: 57000/tcp 57001/tcp; 
 # transmission: 51413 9091/tcp 42243/udp 53069/udp 45563/udp
